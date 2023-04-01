@@ -17,6 +17,13 @@ class Environment {
         return value;
     }
     /**
+     * Updated an existing variable
+     */
+    assign(name, value){
+        this.resolve(name).record[name] = value;
+        return value;
+    }
+    /**
      * Ensuring all variables are save to the env record.
      */
     printEnvRecord(){
@@ -28,11 +35,21 @@ class Environment {
      * if the value is not defined.
      */
     lookup(name){
-        if(!this.record.hasOwnProperty(name)){
-            throw new ReferenceError(`Variable "${name}" is not defined`);
+        return this.resolve(name).record[name];
         }
-        return this.record[name];
+        /**
+         * Returns specific environment in which a variable is defined, or 
+         * throws if a variable is not defined.
+         */
+        resolve(name) {
+            if(this.record.hasOwnProperty(name)) {
+                return this;
+            }
+            if (this.parent == null){
+            throw new ReferenceError(`Variable "${name}" is not defined`);
+            }
+            return this.parent.resolve(name);
+        }
     }
-}
 
 module.exports = Environment;
