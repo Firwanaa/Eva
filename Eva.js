@@ -1,5 +1,5 @@
 const assert = require('assert');
-const Enviroment = require('./Enviroment');
+const Environment = require('./Enviroment');
 /*
  *Eva interpreter
  * */
@@ -7,7 +7,7 @@ class Eva {
   /**
    * Creates an Eva instance with the global environment.
    */
-  constructor(global = new Enviroment()) {
+  constructor(global = new Environment()) {
     this.global = global;
   }
   /**
@@ -15,7 +15,7 @@ class Eva {
    */
   eval(exp, env = this.global) {
     // remove later
-    env.printEnvRecord();
+    // env.printEnvRecord();
     // -------------------------------------------
     // Self-evaluating expressions:
     if (isNumber(exp)) {
@@ -28,30 +28,49 @@ class Eva {
     // -------------------------------------------
     // Math operations:
     if (exp[0] === '+') {
-      return this.eval(exp[1]) + this.eval(exp[2]);
+      return this.eval(exp[1], env) + this.eval(exp[2], env);
     }
     if (exp[0] === '-') {
-      return this.eval(exp[1]) - this.eval(exp[2]);
+      return this.eval(exp[1], env) - this.eval(exp[2], env);
     }
     if (exp[0] === '*') {
-      return this.eval(exp[1]) * this.eval(exp[2]);
+      return this.eval(exp[1], env) * this.eval(exp[2], env);
     }
     if (exp[0] === '/') {
-      return this.eval(exp[1]) / this.eval(exp[2]);
+      return this.eval(exp[1], env) / this.eval(exp[2], env);
     }
     // -------------------------------------------
-    // Variables decleration:
+    // Block: sequance of expressions
+    if (exp[0] === 'begin') {
+      const blockEnv = new Environment({test: 'test'}, env);
+      return this._evalBlock(exp, blockEnv);
+    }
+
+    // -------------------------------------------
+    // Variables decleration: (var foo 10)
     if (exp[0] === 'var') {
       const [_, name, value] = exp;
-      return env.define(name, this.eval(value));
+      return env.define(name, this.eval(value, env));
     }
     // -------------------------------------------
-    // Variables access:
+    // Variables access: foo
     if (isVariableName(exp)) {
       return env.lookup(exp);
     }
 
     throw `Unimplemented: ${JSON.stringify(exp)}`;
+  }
+
+  _evalBlock(block, env) {
+    let result;
+
+    const [_tag, ...expressions] = block;
+
+    expressions.forEach((exp) => {
+      result = this.eval(exp, env);
+    });
+    // console.log('result ' + result);
+    return result;
   }
 }
 
@@ -67,7 +86,7 @@ function isVariableName(exp) {
 // -------------------------------------------
 // Tests: Test Driven development
 const eva = new Eva(
-  new Enviroment({
+  new Environment({
     null: null,
 
     true: true,
@@ -102,5 +121,31 @@ assert.strictEqual(eva.eval('isUser'), true);
 
 assert.strictEqual(eva.eval(['var', 'z', ['*', 2, 3]]), 6);
 assert.strictEqual(eva.eval('z'), 6);
+
+// Blocks:
+assert.strictEqual(
+  eva.eval([
+    'begin',
+    ['var', 'z', 2],
+    ['var', 'x', 30],
+    ['var', 'y', 20],
+    ['+', ['*', 'x', 'y'], 50],
+  ]),
+  650
+);
+
+assert.strictEqual(
+  eva.eval(
+    ['begin', 
+      ['var', 'x', 10], 
+      
+      ['begin', 
+        ['var', 'x', 20], 
+        'x'
+      ], 
+      'x'
+      ]),
+  10
+);
 
 console.log('All assertions passed!');

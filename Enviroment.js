@@ -1,12 +1,13 @@
 /**
  * Enviroment: names storage.
  */
-class Enviroment {
+class Environment {
     /**
      * Creates an environment with given record.
      */
-    constructor(record = {}) {
+    constructor(record = {}, parent = null) {
         this.record = record;
+        this.parent = parent;
     }
     /**
      * Creates a variable with the given name and value.
@@ -20,6 +21,7 @@ class Enviroment {
      */
     printEnvRecord(){
         console.log(this.record);
+        console.log(this.parent);
     }
     /**
      * Returns the value of a defined variable or throws
@@ -33,4 +35,4 @@ class Enviroment {
     }
 }
 
-module.exports = Enviroment;
+module.exports = Environment;
