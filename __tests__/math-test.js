@@ -2,7 +2,7 @@ const assert = require('assert');
 
 module.exports = (eva) => {
   // Math:
-  assert.strictEqual(eva.eval(['+', 1, 5]), 6);
+  assert.strictEqual(eva.eval(['+', 1, 6]), 7);
   assert.strictEqual(eva.eval(['+', ['+', 3, 2], 5]), 10);
   assert.strictEqual(eva.eval(['-', 5, 4]), 1);
   assert.strictEqual(eva.eval(['-', ['-', 3, 2], 1]), 0);

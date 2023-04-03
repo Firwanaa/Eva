@@ -10,19 +10,13 @@ const tests = [
   require('./if-test.js'),
   require('./while-test.js'),
   require('./comparison-test'),
+  require('./built-in-function-test'),
 ];
 
-const eva = new Eva(
-  new Environment({
-    null: null,
-
-    true: true,
-    false: false,
-
-    VERSION: '1.0',
-  })
-);
+const eva = new Eva();
 
 tests.forEach((test) => test(eva));
+
+eva.eval(['print', '"Hello"', '"World!"']);
 
 console.log('All assertions passed!');
