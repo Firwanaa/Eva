@@ -7,6 +7,9 @@ const tests = [
   require('./math-test.js'),
   require('./variables-test.js'),
   require('./block-test.js'),
+  require('./if-test.js'),
+  require('./while-test.js'),
+  require('./comparison-test'),
 ];
 
 const eva = new Eva(

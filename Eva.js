@@ -28,18 +28,47 @@ class Eva {
     // -------------------------------------------
     // Math operations:
 
-    if (exp[0] === '+') {
-      return this.eval(exp[1], env) + this.eval(exp[2], env);
+    // if (exp[0] === '+') {
+    //   return this.eval(exp[1], env) + this.eval(exp[2], env);
+    // }
+    // if (exp[0] === '-') {
+    //   return this.eval(exp[1], env) - this.eval(exp[2], env);
+    // }
+    // if (exp[0] === '*') {
+    //   return this.eval(exp[1], env) * this.eval(exp[2], env);
+    // }
+    // if (exp[0] === '/') {
+    //   return this.eval(exp[1], env) / this.eval(exp[2], env);
+    // }
+
+    // // -------------------------------------------
+    // // comparison operators:
+    // if (exp[0] === '>') {
+    //   return this.eval(exp[1], env) > this.eval(exp[2], env);
+    // }
+    // if (exp[0] === '>=') {
+    //   return this.eval(exp[1], env) >= this.eval(exp[2], env);
+    // }
+    // if (exp[0] === '<') {
+    //   return this.eval(exp[1], env) < this.eval(exp[2], env);
+    // }
+    // if (exp[0] === '<=') {
+    //   return this.eval(exp[1], env) <= this.eval(exp[2], env);
+    // }
+    // if (exp[0] === '=') {
+    //   return this.eval(exp[1], env) == this.eval(exp[2], env);
+    // }
+
+    // -------------------------------------------
+    // Math and comparison operators:
+    if (['+', '-', '*', '/', '>', '>=', '<', '<=', '='].includes(exp[0])) {
+      return applyOperator(
+        exp[0],
+        this.eval(exp[1], env),
+        this.eval(exp[2], env)
+      );
     }
-    if (exp[0] === '-') {
-      return this.eval(exp[1], env) - this.eval(exp[2], env);
-    }
-    if (exp[0] === '*') {
-      return this.eval(exp[1], env) * this.eval(exp[2], env);
-    }
-    if (exp[0] === '/') {
-      return this.eval(exp[1], env) / this.eval(exp[2], env);
-    }
+
     // -------------------------------------------
     // Block: sequance of expressions
 
@@ -71,6 +100,29 @@ class Eva {
       return env.lookup(exp);
     }
 
+    // -------------------------------------------
+    // if-expression:
+
+    if (exp[0] === 'if') {
+      const [_, condition, consequent, alternate] = exp;
+      if (this.eval(condition, env)) {
+        return this.eval(consequent, env);
+      }
+      return this.eval(alternate, env);
+    }
+
+    // -------------------------------------------
+    // while-expression:
+
+    if (exp[0] === 'while') {
+      const [_tag, condition, body] = exp;
+      let result;
+      while (this.eval(condition, env)) {
+        result = this.eval(body, env);
+      }
+      return result;
+    }
+
     throw `Unimplemented: ${JSON.stringify(exp)}`;
   }
 
@@ -95,6 +147,12 @@ function isString(exp) {
 }
 function isVariableName(exp) {
   return typeof exp === 'string' && /^[a-zA-Z][a-zA-Z0-9_]*$/.test(exp);
+}
+
+function applyOperator(operator, a, b) {
+  const exp = operator === '=' ? '==' : operator;
+  const expression = `${a} ${exp} ${b}`;
+  return eval(expression);
 }
 
 module.exports = Eva;
