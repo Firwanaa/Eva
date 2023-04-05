@@ -13,6 +13,7 @@ const tests = [
   require('./built-in-function-test'),
   require('./user-defined-function-test'),
   require('./lambda-function-test'),
+  require('./switch-test'),
 ];
 
 const eva = new Eva();

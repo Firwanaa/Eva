@@ -1,5 +1,6 @@
 const assert = require('assert');
 const Environment = require('./Environment');
+const Transformer = require('./transform/Transformer');
 /*
  *Eva interpreter
  * */
@@ -9,6 +10,7 @@ class Eva {
    */
   constructor(global = GlobalEnvironment) {
     this.global = global;
+    this._transformer = new Transformer();
   }
   /**
    * Evaluates an expression in the given environment.
@@ -127,27 +129,89 @@ class Eva {
     // Function declaration: (def square (x) (* x x))
     // Syntactic sugar for: (var square (lambda (x) (* x x)))
     if (exp[0] === 'def') {
-      const [_tag, name, params, body] = exp;
-
       // JIT-transpile to a variable declaration
 
-      const varExp = ['var', name, ['lambda', params, body]];
+      const varExp = this._transformer.transformDefToLambda(exp);
 
       return this.eval(varExp, env);
+    }
+
+    // -------------------------------------------
+    // Switch-expression: (switch (cond1, block1) ...)
+    //
+    //Syntactic sugar for nested if-expressions
+    if (exp[0] === 'switch') {
+      const ifExp = this._transformer.transfromSwitchToIf(exp);
+
+      
+      return this.eval(ifExp, env);
+    }
+
+    // -------------------------------------------
+    // For-loop: (for init condition modifier body)
+    //
+    //Syntactic sugar for: (begin init (while condition (begin body modifier)))
+    if (exp[0] === 'for') {
+      const whileExp = this._transformer.transformForToWhile(exp);
+
+      return this.eval(whileExp, env);
+    }
+
+
+    // -------------------------------------------
+    // Increment: (++ foo)
+    // 
+    // Syntactic sugar for: (set foo (+ foo 1))
+    if (exp[0] === '++'){
+      const setExp = this._transformer.transfromIncToSet(exp);
+
+      return this.eval(setExp, env);
+    }
+
+
+    // -------------------------------------------
+    // Deccrement: (-- foo)
+    // 
+    // Syntactic sugar for: (set foo (- foo 1))
+    if (exp[0] === '--'){
+      const setExp = this._transformer.transfromDecToSet(exp);
+
+      return this.eval(setExp, env);
+    }
+
+    // -------------------------------------------
+    // Increment: (+= foo)
+    // 
+    // Syntactic sugar for: (set foo (+ foo inc))
+    if (exp[0] === '+='){
+      const setExp = this._transformer.transfromIncValToSet(exp);
+
+      return this.eval(setExp, env);
+    }
+
+    // -------------------------------------------
+    // Decrement: (-= foo)
+    // 
+    // Syntactic sugar for: (set foo (- foo dec))
+    if (exp[0] === '-='){
+      const setExp = this._transformer.transfromDecValToSet(exp);
+
+      return this.eval(setExp, env);
     }
 
     // -------------------------------------------
     // Lambda function: (lambda (x) (* x x))
     // Similar to "function" but without name
 
-    if(exp[0] === 'lambda'){
+    if (exp[0] === 'lambda') {
       const [_tag, params, body] = exp;
 
       return {
-        params, body, env,//Clousre!
+        params,
+        body,
+        env, //Clousre!
       };
     }
-
 
     // -------------------------------------------
     // Function calls:
