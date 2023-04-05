@@ -1,5 +1,5 @@
 const assert = require('assert');
-const testUtil = require('./test-util');
+const {test} = require('./test-util');
 
 module.exports = (eva) => {
   // Blocks:
@@ -48,7 +48,7 @@ module.exports = (eva) => {
     100
   );
 
-  testUtil.test(
+  test(
     eva,
     `
     (begin

@@ -1,6 +1,6 @@
 const Eva = require('../Eva');
 const Environment = require('../Environment');
-
+const evaParser = require('../parser/evaParser');
 // Tests: Test Driven development
 const tests = [
   require('./self-eval-test.js'),
@@ -11,6 +11,7 @@ const tests = [
   require('./while-test.js'),
   require('./comparison-test'),
   require('./built-in-function-test'),
+  require('./user-defined-function-test'),
 ];
 
 const eva = new Eva();
