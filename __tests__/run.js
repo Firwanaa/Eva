@@ -12,6 +12,7 @@ const tests = [
   require('./comparison-test'),
   require('./built-in-function-test'),
   require('./user-defined-function-test'),
+  require('./lambda-function-test'),
 ];
 
 const eva = new Eva();

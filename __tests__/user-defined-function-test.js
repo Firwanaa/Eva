@@ -31,7 +31,8 @@ module.exports = (eva) => {
   );
 
   //Clouser
-  test(eva, 
+  test(
+    eva,
     `
     
     (begin
@@ -52,5 +53,5 @@ module.exports = (eva) => {
     )
     `,
     160
-    );
+  );
 };

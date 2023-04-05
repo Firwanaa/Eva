@@ -124,6 +124,32 @@ class Eva {
     }
 
     // -------------------------------------------
+    // Function declaration: (def square (x) (* x x))
+    // Syntactic sugar for: (var square (lambda (x) (* x x)))
+    if (exp[0] === 'def') {
+      const [_tag, name, params, body] = exp;
+
+      // JIT-transpile to a variable declaration
+
+      const varExp = ['var', name, ['lambda', params, body]];
+
+      return this.eval(varExp, env);
+    }
+
+    // -------------------------------------------
+    // Lambda function: (lambda (x) (* x x))
+    // Similar to "function" but without name
+
+    if(exp[0] === 'lambda'){
+      const [_tag, params, body] = exp;
+
+      return {
+        params, body, env,//Clousre!
+      };
+    }
+
+
+    // -------------------------------------------
     // Function calls:
     //
     // (print "Hello World")
@@ -140,12 +166,29 @@ class Eva {
         return fn(...args);
       }
       // 2. User-defined funtions:
-      // TODO
+
+      const activationRecord = {};
+      fn.params.forEach((param, index) => {
+        activationRecord[param] = args[index];
+      });
+
+      const activationEnv = new Environment(
+        activationRecord,
+        fn.env //static scope
+      );
+
+      return this._evalBody(fn.body, activationEnv);
     }
 
     throw `Unimplemented: ${JSON.stringify(exp)}`;
   }
 
+  _evalBody(body, env) {
+    if (body[0] === 'begin') {
+      return this._evalBlock(body, env);
+    }
+    return this.eval(body, env);
+  }
   _evalBlock(block, env) {
     let result;
 
@@ -195,6 +238,7 @@ const GlobalEnvironment = new Environment({
     return op1 - op2;
   },
   '*'(op1, op2) {
+    console.log('Multiplication ' + op1 + ' * ' + op2);
     return op1 * op2;
   },
   '/'(op1, op2) {
