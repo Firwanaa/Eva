@@ -53,16 +53,16 @@ class Transformer {
   /**
    * Transforms `incval` to `set` expression.
    */
-  transformIncValToSet(incValExp) {
-    const [_tag, variable, value] = incValExp;
+  transformIncValToSet(exp) {
+    const [_tag, variable, value] = exp;
     return ['set', variable, ['+', variable, value]];
   }
 
   /**
    * Transforms `decval` to `set` expression.
    */
-  transformDecValToSet(decValExp) {
-    const [_tag, variable, value] = decValExp;
+  transformDecValToSet(exp) {
+    const [_tag, variable, value] = exp;
     return ['set', variable, ['-', variable, value]];
   }
 }
