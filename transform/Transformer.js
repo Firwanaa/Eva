@@ -8,36 +8,62 @@ class Transformer {
    */
   transformDefToLambda(defExp) {
     const [_tag, name, params, body] = defExp;
-    return  ['var', name, ['lambda', params, body]];
+    return ['var', name, ['lambda', params, body]];
   }
 
   /**
    * Transforms `switch` to nested `if`-expression.
    */
   transfromSwitchToIf(switchExp) {
-    const [_tag,...cases] = switchExp;
+    const [_tag, ...cases] = switchExp;
     const ifExp = ['if', null, null, null];
 
     let current = ifExp;
-    for (let i = 0; i <cases.length; i++) {
-        const [currentCond, currentBlock] = cases[i];
-        
-        current[1] = currentCond;
-        current[2] = currentBlock;
+    for (let i = 0; i < cases.length; i++) {
+      const [currentCond, currentBlock] = cases[i];
 
-        const next = cases[i + 1];
-        const [nextCond, nextBlock] = cases[i];
+      current[1] = currentCond;
+      current[2] = currentBlock;
 
-        current[3] = nextCond == 'else'
-            ? nextBlock
-            : ['if'];
+      const next = cases[i + 1];
+      const [nextCond, nextBlock] = cases[i];
 
-        current = current[3];
+      current[3] = nextCond == 'else' ? nextBlock : ['if'];
+
+      current = current[3];
     }
 
     return ifExp;
   }
 
+  /**
+   * Transforms `++` operator to an assignment.
+   */
+  transfromIncToSet(exp) {
+    const [_tag, variable] = exp;
+    return ['set', variable, ['+', variable, 1]];
+  }
+  /**
+   * Transforms `++` operator to an assignment.
+   */
+  transfromDecToSet(exp) {
+    const [_tag, variable] = exp;
+    return ['set', variable, ['-', variable, 1]];
+  }
+  /**
+   * Transforms `incval` to `set` expression.
+   */
+  transformIncValToSet(incValExp) {
+    const [_tag, variable, value] = incValExp;
+    return ['set', variable, ['+', variable, value]];
+  }
 
+  /**
+   * Transforms `decval` to `set` expression.
+   */
+  transformDecValToSet(decValExp) {
+    const [_tag, variable, value] = decValExp;
+    return ['set', variable, ['-', variable, value]];
+  }
 }
 module.exports = Transformer;

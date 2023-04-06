@@ -14,6 +14,7 @@ const tests = [
   require('./user-defined-function-test'),
   require('./lambda-function-test'),
   require('./switch-test'),
+  require('./syntactic-sugar-test'),
 ];
 
 const eva = new Eva();
