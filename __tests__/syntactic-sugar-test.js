@@ -4,7 +4,8 @@ const { test } = require('./test-util');
 module.exports = (eva) => {
   // Math functions:
 
-  test(eva, 
+  test(
+    eva,
     `
     (begin
         (var x 10)
@@ -12,8 +13,11 @@ module.exports = (eva) => {
         x    
     )
   
-  `, 11);
-  test(eva, 
+  `,
+    11
+  );
+  test(
+    eva,
     `
     (begin
         (var x 6)
@@ -21,8 +25,11 @@ module.exports = (eva) => {
         x    
     )
   
-  `, 5);
-  test(eva, 
+  `,
+    5
+  );
+  test(
+    eva,
     `
     (begin
         (var result 0)
@@ -30,8 +37,11 @@ module.exports = (eva) => {
         result    
     )
   
-  `, 5);
-  test(eva, 
+  `,
+    5
+  );
+  test(
+    eva,
     `
     (begin
         (var result 5)
@@ -39,5 +49,18 @@ module.exports = (eva) => {
         result    
     )
   
-  `, 3);
+  `,
+    3
+  );
+
+   test(eva,
+    `
+      (begin
+        (var result 0)
+        (for (var i 0) (< i 5) (set i (+ i 1))
+          (set result (+ result i)))
+        result
+      )
+    `,
+    10);
 };

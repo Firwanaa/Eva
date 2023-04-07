@@ -65,5 +65,13 @@ class Transformer {
     const [_tag, variable, value] = exp;
     return ['set', variable, ['-', variable, value]];
   }
+
+  /**
+   * Transforms `for`-loop to a `while`-loop.
+   */
+  transformForToWhile(exp) {
+    const [_tag, init, condition, modifier, body] = exp;
+    return ['begin', init, ['while', condition, ['begin', body, modifier]]];
+  }
 }
 module.exports = Transformer;

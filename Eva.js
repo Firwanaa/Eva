@@ -154,7 +154,7 @@ class Eva {
     if (exp[0] === 'for') {
       const whileExp = this._transformer.transformForToWhile(exp);
 
-      return this.eval(whileExp, env);
+       return this.eval(whileExp, env);
     }
 
 
@@ -220,7 +220,6 @@ class Eva {
     // (+ x 5)
     // (> foo bar)
     if (Array.isArray(exp)) {
-      console.log('Exp at Array.isArray() ' + exp);
       const fn = this.eval(exp[0], env);
 
       const args = exp.slice(1).map((arg) => this.eval(arg, env));
@@ -302,7 +301,6 @@ const GlobalEnvironment = new Environment({
     return op1 - op2;
   },
   '*'(op1, op2) {
-    console.log('Multiplication ' + op1 + ' * ' + op2);
     return op1 * op2;
   },
   '/'(op1, op2) {
