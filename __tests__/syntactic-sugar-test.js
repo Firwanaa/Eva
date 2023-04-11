@@ -53,7 +53,8 @@ module.exports = (eva) => {
     3
   );
 
-   test(eva,
+  test(
+    eva,
     `
       (begin
         (var result 0)
@@ -62,5 +63,6 @@ module.exports = (eva) => {
         result
       )
     `,
-    10);
+    10
+  );
 };

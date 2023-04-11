@@ -91,8 +91,23 @@ class Eva {
     // Variables update: (set foo 10)
 
     if (exp[0] === 'set') {
-      const [_, name, value] = exp;
-      return env.assign(name, this.eval(value, env));
+      const [_, ref, value] = exp;
+
+      // Assign to a property:
+
+      if (ref[0] === 'prop') {
+        console.log({ref});
+          const [_, instace, propName] = ref;
+          const instaceEnv = this.eval(instace, env);
+          return instaceEnv.define(
+            propName,
+            this.eval(value, env),
+          );
+      }
+
+      // Simple assignment:
+
+      return env.assign(ref, this.eval(value, env));
     }
 
     // -------------------------------------------
@@ -143,7 +158,6 @@ class Eva {
     if (exp[0] === 'switch') {
       const ifExp = this._transformer.transfromSwitchToIf(exp);
 
-      
       return this.eval(ifExp, env);
     }
 
@@ -154,26 +168,24 @@ class Eva {
     if (exp[0] === 'for') {
       const whileExp = this._transformer.transformForToWhile(exp);
 
-       return this.eval(whileExp, env);
+      return this.eval(whileExp, env);
     }
-
 
     // -------------------------------------------
     // Increment: (++ foo)
-    // 
+    //
     // Syntactic sugar for: (set foo (+ foo 1))
-    if (exp[0] === '++'){
+    if (exp[0] === '++') {
       const setExp = this._transformer.transfromIncToSet(exp);
 
       return this.eval(setExp, env);
     }
 
-
     // -------------------------------------------
     // Deccrement: (-- foo)
-    // 
+    //
     // Syntactic sugar for: (set foo (- foo 1))
-    if (exp[0] === '--'){
+    if (exp[0] === '--') {
       const setExp = this._transformer.transfromDecToSet(exp);
 
       return this.eval(setExp, env);
@@ -181,9 +193,9 @@ class Eva {
 
     // -------------------------------------------
     // Increment: (+= foo inc)
-    // 
+    //
     // Syntactic sugar for: (set foo (+ foo inc))
-    if (exp[0] === '+='){
+    if (exp[0] === '+=') {
       const setExp = this._transformer.transformIncValToSet(exp);
 
       return this.eval(setExp, env);
@@ -191,9 +203,9 @@ class Eva {
 
     // -------------------------------------------
     // Decrement: (-= foo)
-    // 
+    //
     // Syntactic sugar for: (set foo (- foo dec))
-    if (exp[0] === '-='){
+    if (exp[0] === '-=') {
       const setExp = this._transformer.transformDecValToSet(exp);
 
       return this.eval(setExp, env);
@@ -214,6 +226,62 @@ class Eva {
     }
 
     // -------------------------------------------
+    // Class decleration: (class <Name> <Parent> <Body>)
+    // class is just an Environment
+
+    if (exp[0] === 'class') {
+      const [_tag, name, parent, body] = exp;
+      console.log('** class name', name);
+      console.log('***class', exp);
+      // A class is an environment! -- a storage methods,
+      // and shared properties:
+
+      const parentEnv = this.eval(parent, env) || env;
+
+      const classEnv = new Environment({}, parentEnv);
+
+      // Body is evaluated in the class environment
+
+      this._evalBody(body, classEnv);
+
+      // Class is accessible by name
+
+      return env.define(name, classEnv);
+    }
+
+    // -------------------------------------------
+    // Class instantiation: (new <Class> <Arguments>...)
+
+    if (exp[0] === 'new') {
+      const classEnv = this.eval(exp[1], env);
+
+      // An instance of a class is an environment
+      // The `parent` component of the instance environment
+      // is set to its class.
+
+      const instanceEnv = new Environment({}, classEnv);
+
+      console.log('/**new */', instanceEnv);
+      const args = exp.slice(2).map((arg) => this.eval(arg, env));
+
+      this._callUserDefinedFunction(classEnv.lookup('constructor'), [
+        instanceEnv,
+        ...args,
+      ]);
+      return instanceEnv;
+    }
+
+    // -------------------------------------------
+    // Property access: (prop <instance> <name>)
+
+    if (exp[0] === 'prop') {
+      const [_tag, instace, name] = exp;
+
+      const instanceEnv = this.eval(instace, env);
+      return instanceEnv.lookup(name);
+    }
+
+    // -------------------------------------------
     // Function calls:
     //
     // (print "Hello World")
@@ -230,20 +298,24 @@ class Eva {
       }
       // 2. User-defined funtions:
 
-      const activationRecord = {};
-      fn.params.forEach((param, index) => {
-        activationRecord[param] = args[index];
-      });
-
-      const activationEnv = new Environment(
-        activationRecord,
-        fn.env //static scope
-      );
-
-      return this._evalBody(fn.body, activationEnv);
+      return this._callUserDefinedFunction(fn, args);
     }
 
     throw `Unimplemented: ${JSON.stringify(exp)}`;
+  }
+
+  _callUserDefinedFunction(fn, args) {
+    const activationRecord = {};
+
+    fn.params.forEach((param, index) => {
+      activationRecord[param] = args[index];
+    });
+
+    const activationEnv = new Environment(
+      activationRecord,
+      fn.env //static scope
+    );
+    return this._evalBody(fn.body, activationEnv);
   }
 
   _evalBody(body, env) {
