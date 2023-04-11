@@ -16,6 +16,8 @@ const tests = [
   require('./switch-test'),
   require('./syntactic-sugar-test'),
   require('./class-test'),
+  require('./module-test'),
+  require('./import-test'),
 ];
 
 const eva = new Eva();

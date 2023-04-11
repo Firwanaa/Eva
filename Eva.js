@@ -1,6 +1,10 @@
 const assert = require('assert');
 const Environment = require('./Environment');
 const Transformer = require('./transform/Transformer');
+const evaParser = require('./parser/evaParser');
+
+const fs = require('fs');
+
 /*
  *Eva interpreter
  * */
@@ -12,6 +16,17 @@ class Eva {
     this.global = global;
     this._transformer = new Transformer();
   }
+
+  /**
+   * Evaluate global code wrapping into a block.
+   */
+  evalGlobal(exp) {
+    return this._evalBody(exp, this.global);
+  }
+  // evalGlobal(expressions) {
+  //   return this._evalBlock(['block', expressions], this.global);
+  // }
+
   /**
    * Evaluates an expression in the given environment.
    */
@@ -26,50 +41,6 @@ class Eva {
     if (this._isString(exp)) {
       return exp.slice(1, -1);
     }
-
-    // -------------------------------------------
-    // Math operations: moved to  Gloabalfunctions
-
-    // if (exp[0] === '+') {
-    //   return this.eval(exp[1], env) + this.eval(exp[2], env);
-    // }
-    // if (exp[0] === '-') {
-    //   return this.eval(exp[1], env) - this.eval(exp[2], env);
-    // }
-    // if (exp[0] === '*') {
-    //   return this.eval(exp[1], env) * this.eval(exp[2], env);
-    // }
-    // if (exp[0] === '/') {
-    //   return this.eval(exp[2], env) / this.eval(exp[2], env);
-    // }
-
-    // -------------------------------------------
-    // comparison operators:moved to be Gloabalfunctions
-    // if (exp[0] === '>') {
-    //   return this.eval(exp[1], env) > this.eval(exp[2], env);
-    // }
-    // if (exp[0] === '>=') {
-    //   return this.eval(exp[1], env) >= this.eval(exp[2], env);
-    // }
-    // if (exp[0] === '<') {
-    //   return this.eval(exp[1], env) < this.eval(exp[2], env);
-    // }
-    // if (exp[0] === '<=') {
-    //   return this.eval(exp[1], env) <= this.eval(exp[2], env);
-    // }
-    // if (exp[0] === '=') {
-    //   return this.eval(exp[1], env) == this.eval(exp[2], env);
-    // }
-
-    // -------------------------------------------
-    // Math and comparison operators: (using native eval is slower)
-    // if (['+', '-', '*', '/', '>', '>=', '<', '<=', '='].includes(exp[0])) {
-    //   return applyOperator(
-    //     exp[0],
-    //     this.eval(exp[1], env),
-    //     this.eval(exp[2], env)
-    //   );
-    // }
 
     // -------------------------------------------
     // Block: sequance of expressions
@@ -96,13 +67,10 @@ class Eva {
       // Assign to a property:
 
       if (ref[0] === 'prop') {
-        console.log({ref});
-          const [_, instace, propName] = ref;
-          const instaceEnv = this.eval(instace, env);
-          return instaceEnv.define(
-            propName,
-            this.eval(value, env),
-          );
+        console.log({ ref });
+        const [_, instace, propName] = ref;
+        const instaceEnv = this.eval(instace, env);
+        return instaceEnv.define(propName, this.eval(value, env));
       }
 
       // Simple assignment:
@@ -250,6 +218,13 @@ class Eva {
     }
 
     // -------------------------------------------
+    // super extensions: (super <ClassName>)
+    if (exp[0] === 'super') {
+      const [_tag, className] = exp;
+      return this.eval(className, env).parent;
+    }
+
+    // -------------------------------------------
     // Class instantiation: (new <Class> <Arguments>...)
 
     if (exp[0] === 'new') {
@@ -270,6 +245,37 @@ class Eva {
       ]);
       return instanceEnv;
     }
+
+    // -------------------------------------------
+    // Module declaratuin: (prop <body>)
+
+    if (exp[0] === 'module') {
+      const [_tag, name, body] = exp;
+
+      const moduleEnv = new Environment({}, env);
+      this._evalBody(body, moduleEnv);
+
+      return env.define(name, moduleEnv);
+    }
+
+    // -------------------------------------------
+    // Module import: (import <name>)
+    // TODO: (import (export1, export2, ...) <name>)
+
+    if (exp[0] === 'import') {
+      const [_tag, name] = exp;
+
+      const moduleSrc = fs.readFileSync(
+        `${__dirname}/modules/${name}.eva`,
+        'utf-8',
+      );
+
+      const body = evaParser.parse(`(begin ${moduleSrc})`);
+
+      const moduleExp = ['module', name, body];
+      return this.eval(moduleExp, this.global)
+    }
+
 
     // -------------------------------------------
     // Property access: (prop <instance> <name>)
@@ -346,12 +352,6 @@ class Eva {
     return typeof exp === 'string' && /^[+\-*/<>=a-zA-Z0-9_]+$/.test(exp);
   }
 }
-
-// function applyOperator(operator, a, b) {
-//   const exp = operator === '=' ? '==' : operator;
-//   const expression = `${a} ${exp} ${b}`;
-//   return eval(expression);
-// }
 
 /**
  * Default Global Environment.
